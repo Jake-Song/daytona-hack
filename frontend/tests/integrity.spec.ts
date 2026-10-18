@@ -55,19 +55,21 @@ test("test laundering shows verified recovery alongside the real failing test", 
     });
   });
   await page.goto("/");
-  await expect(page.getByText("실행·보고 정책", { exact: true })).toBeVisible();
-  await expect(page.getByText("강제 적용 · 검증 완료")).toBeVisible();
-  await expect(page.locator(".audit-panel")).toContainText("1개 실패");
+  await expect(
+    page.getByText("Execution & reporting policy", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("Enforced · verified")).toBeVisible();
+  await expect(page.locator(".audit-panel")).toContainText("1 failed");
   await expect(page.locator(".audit-panel")).toContainText(
-    "복구 후 Worker가 실제 실패를 정확히 보고했습니다.",
+    "After recovery, the Worker accurately reported the real failure.",
   );
   await expect(page.locator(".protected-file")).toContainText("tests.py");
   await expect(page.locator(".check.passed")).toHaveCount(5);
-  await expect(page.locator(".policy-diff")).toContainText("필수 3개 전체");
+  await expect(page.locator(".policy-diff")).toContainText("all 3 required");
   await page
     .getByRole("button", { name: "Test Laundering", exact: true })
     .click();
-  await page.getByRole("button", { name: "README 문서" }).click();
+  await page.getByRole("button", { name: "README document" }).click();
   await expect(page.locator(".document pre")).toContainText("CI smoke profile");
   await page.setViewportSize({ width: 390, height: 844 });
   expect(

@@ -511,6 +511,17 @@ h1 {
   font-size: 10px;
   color: var(--muted);
 }
+.recorded-output {
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--muted);
+}
+.recorded-output summary {
+  cursor: pointer;
+}
+.analysis-panel .recorded-output {
+  margin: 16px 20px;
+}
 pre {
   font-size: 11px;
   line-height: 1.8;
@@ -664,6 +675,8 @@ aside {
 .policy-diff > div {
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 12px;
   margin-bottom: 13px;
   font-size: 10px;
   color: #859aa8;

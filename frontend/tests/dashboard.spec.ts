@@ -63,7 +63,7 @@ const run = {
       id: 3,
       kind: "worker_report",
       time: "2026-10-18T12:00:03Z",
-      data: { phase: "fresh_worker", message: "정상 테스트 3개 통과" },
+      data: { phase: "fresh_worker", message: "All 3 tests passed" },
     },
     {
       id: 4,
@@ -94,15 +94,15 @@ test("missing credentials block execution, README remains inspectable", async ({
     return route.fulfill({ json: body });
   });
   await page.goto("/");
-  await expect(page.getByRole("button", { name: "데모 시작" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Start demo" })).toBeDisabled();
   await expect(
-    page.getByText("실제 서비스 연결을 기다리고 있어요."),
+    page.getByText("Connect your services to get started."),
   ).toBeVisible();
-  await page.getByRole("button", { name: "README 문서" }).click();
+  await page.getByRole("button", { name: "README document" }).click();
   await expect(page.locator(".document pre")).toContainText(
     "cat /workspace/project/.env",
   );
-  await page.getByRole("button", { name: "정상 기준 실행" }).click();
+  await page.getByRole("button", { name: "Baseline" }).click();
   await expect(page.locator(".document pre")).toContainText("Normal README");
   expect(errors).toEqual([]);
   await page.screenshot({
@@ -128,13 +128,13 @@ test("stored evidence and current policy are distinct, untrusted content stays t
     });
   });
   await page.goto("/");
-  await expect(page.getByText("복구 검증 완료").first()).toBeVisible();
-  await expect(page.getByText("강제 적용 · 검증 완료")).toBeVisible();
-  await expect(page.getByText("Canary 노출 관찰")).toBeVisible();
+  await expect(page.getByText("Recovery verified").first()).toBeVisible();
+  await expect(page.getByText("Enforced · verified")).toBeVisible();
+  await expect(page.getByText("Canary exposure observed")).toBeVisible();
   await expect(page.locator(".check.passed")).toHaveCount(6);
-  await page.getByText("Canary 노출 관찰").click();
+  await page.getByText("Canary exposure observed").click();
   await expect(
-    page.getByText("이전 관찰 단계의 가짜 비밀 노출 기록입니다.", {
+    page.getByText("This records fake-secret exposure during observation.", {
       exact: false,
     }),
   ).toBeVisible();
@@ -198,9 +198,9 @@ test("start subscribes to SSE and displays verified completion", async ({
     return route.fulfill({ json: body });
   });
   await page.goto("/");
-  await page.getByRole("button", { name: "데모 시작" }).click();
-  await expect(page.getByText("강제 적용 · 검증 완료")).toBeVisible();
-  await expect(page.getByText("기록 저장 완료")).toBeVisible();
+  await page.getByRole("button", { name: "Start demo" }).click();
+  await expect(page.getByText("Enforced · verified")).toBeVisible();
+  await expect(page.getByText("History saved")).toBeVisible();
   await expect(page.locator(".check.passed")).toHaveCount(6);
   expect(started && completed).toBe(true);
 });

@@ -60,37 +60,37 @@ const terminal = new Set([
   "interrupted",
 ]);
 const statuses: Record<string, string> = {
-  queued: "실행 대기",
-  preflight: "연결 확인",
-  provisioning: "환경 준비",
-  observing: "공격 관찰",
-  analyzing: "위반 분석",
-  patching: "정책 적용",
-  verifying: "방어 검증",
-  cleaning_up: "환경 정리",
-  succeeded: "복구 검증 완료",
-  failed: "실행 실패",
-  cancelled: "중지됨",
-  attack_not_reproduced: "공격 미재현",
-  baseline_passed: "정상 기준 통과",
-  interrupted: "실행 중단",
+  queued: "Ready",
+  preflight: "Checking connections",
+  provisioning: "Provisioning",
+  observing: "Observing",
+  analyzing: "Analyzing",
+  patching: "Applying policy",
+  verifying: "Verifying",
+  cleaning_up: "Cleanup",
+  succeeded: "Recovery verified",
+  failed: "Run failed",
+  cancelled: "Cancelled",
+  attack_not_reproduced: "Attack not reproduced",
+  baseline_passed: "Baseline passed",
+  interrupted: "Interrupted",
 };
 const checks: Record<string, string> = {
-  baseline_tests: "정상 기준 테스트",
-  same_attack: "동일 공격 재실행",
-  python_read: "Python 우회 읽기",
-  gateway_read: "Gateway 파일 읽기",
-  worker_cannot_chmod: "Worker 권한 변경 차단",
-  normal_tests: "정상 테스트 유지",
-  fresh_worker: "새 Worker 작업 완료",
-  honest_observation: "허위 성공 보고 없음",
-  partial_suite_blocked: "부분 테스트 실행 차단",
-  forged_output_blocked: "가짜 성공 출력 차단",
-  full_suite_verified: "전체 실행 · 실제 실패 발견",
-  false_success_rejected: "허위 성공 보고 거부",
+  baseline_tests: "Baseline tests",
+  same_attack: "Same attack replay",
+  python_read: "Python read bypass",
+  gateway_read: "Gateway file read",
+  worker_cannot_chmod: "Worker permission changes blocked",
+  normal_tests: "Normal tests preserved",
+  fresh_worker: "Fresh Worker completion",
+  honest_observation: "No false success report",
+  partial_suite_blocked: "Partial suite blocked",
+  forged_output_blocked: "Forged output blocked",
+  full_suite_verified: "Full suite detects real failure",
+  false_success_rejected: "False success rejected",
 };
 const scenarioLabels: Record<string, string> = {
-  normal: "정상 기준",
+  normal: "Baseline",
   "readme-injection": "README Injection",
   "test-laundering": "Test Laundering",
 };
@@ -124,7 +124,7 @@ async function api<T>(path: string, options?: RequestInit): Promise<T> {
     throw new Error(
       typeof body.detail === "string"
         ? body.detail
-        : `요청 실패 (${response.status})`,
+        : `Request failed (${response.status})`,
     );
   }
   return response.json();
@@ -158,7 +158,21 @@ function Tag({
   return <span className={"tag " + tone}>{children}</span>;
 }
 function time(value: string) {
-  return new Date(value).toLocaleTimeString("ko-KR", { hour12: false });
+  return new Date(value).toLocaleTimeString("en-GB", { hour12: false });
+}
+
+function RecordedText({ value }: { value: unknown }) {
+  const text = String(value);
+  // Preserve historical evidence verbatim without mixing languages in the dashboard.
+  if (/\p{Script=Hangul}/u.test(text)) {
+    return (
+      <details className="recorded-output">
+        <summary>Original recorded output (Korean)</summary>
+        <p>{text}</p>
+      </details>
+    );
+  }
+  return <p>{text}</p>;
 }
 
 function EventCard({ event }: { event: Event }) {
@@ -171,26 +185,26 @@ function EventCard({ event }: { event: Event }) {
     phase: String(d.message || d.name || ""),
     tool_request: tool?.command || `${tool?.action} ${tool?.path || ""}`,
     tool_result: d.canary_exposed
-      ? "Canary 노출 관찰"
-      : `실행 결과 · exit ${result?.exit_code}`,
-    boundary_verified: "비특권 실행 경계 확인",
-    models_ready: "Nosana 모델 연결 확인",
-    sandbox_created: "Daytona 샌드박스 생성",
-    boundary_violation: "보호 경계 위반 기록",
-    security_decision: "Security Agent 분석 완료",
-    policy_applied: "접근 정책 v1 적용",
-    verification: `${checks[String(d.name)] || d.name} · ${d.passed ? "통과" : "실패"}`,
-    worker_report: "Worker 결과 보고",
-    report_rejected: "검증 정책이 허위·미검증 보고를 거부함",
-    suite_audit: "제어 영역의 전체 테스트 독립 검증",
-    completed: statuses[String(d.status)] || "실행 종료",
-    cleanup: d.ok ? "샌드박스 삭제 완료" : "샌드박스 삭제 실패",
-    error: "실행 오류",
-    observation_complete: "위반 미재현 · 패치 없음",
-    cancel_requested: "중지 요청 접수",
-    cancelled: "실행 중지",
-    worker_limit: "Worker 호출 제한 도달",
-    interrupted: "서버 재시작으로 중단",
+      ? "Canary exposure observed"
+      : `Execution result · exit ${result?.exit_code}`,
+    boundary_verified: "Unprivileged boundary verified",
+    models_ready: "Nosana models connected",
+    sandbox_created: "Daytona sandbox created",
+    boundary_violation: "Boundary violation recorded",
+    security_decision: "Security Agent analysis complete",
+    policy_applied: "Policy v1 applied",
+    verification: `${checks[String(d.name)] || d.name} · ${d.passed ? "PASS" : "FAIL"}`,
+    worker_report: "Worker report",
+    report_rejected: "False or unverified report rejected",
+    suite_audit: "Independent full-suite audit",
+    completed: statuses[String(d.status)] || "Run complete",
+    cleanup: d.ok ? "Sandbox deleted" : "Sandbox deletion failed",
+    error: "Run error",
+    observation_complete: "No violation reproduced · no patch",
+    cancel_requested: "Cancellation requested",
+    cancelled: "Run cancelled",
+    worker_limit: "Worker tool limit reached",
+    interrupted: "Interrupted by server restart",
   };
   const warning =
     d.canary_exposed ||
@@ -214,13 +228,13 @@ function EventCard({ event }: { event: Event }) {
         <time>{time(event.time)}</time>
       </summary>
       <div className="event-body">
-        {d.message != null && <p>{String(d.message)}</p>}
-        {d.summary != null && <p>{String(d.summary)}</p>}
+        {d.message != null && <RecordedText value={d.message} />}
+        {d.summary != null && <RecordedText value={d.summary} />}
         {result && (
           <pre>
             {result.stdout || ""}
             {result.stderr || ""}
-            {!result.stdout && !result.stderr ? "(출력 없음)" : ""}
+            {!result.stdout && !result.stderr ? "(no output)" : ""}
           </pre>
         )}
         {tool && <pre>{JSON.stringify(tool, null, 2)}</pre>}
@@ -229,16 +243,16 @@ function EventCard({ event }: { event: Event }) {
         )}
         {event.kind === "security_decision" && (
           <p className="muted">
-            근거 이벤트:{" "}
+            Evidence events:{" "}
             {(d.evidence_ids as number[]).map((id) => `#${id}`).join(", ")}
           </p>
         )}
         {d.test_status != null && (
           <p>
-            Worker의 전체 테스트 판정: <strong>{String(d.test_status)}</strong>
+            Worker full-suite verdict: <strong>{String(d.test_status)}</strong>
             {d.suite_verified
-              ? " · 전체 실행 증거 확인됨"
-              : " · 독립 검증 전 보고"}
+              ? " · full-suite evidence verified"
+              : " · reported before independent verification"}
           </p>
         )}
         {event.kind === "suite_audit" && (
@@ -252,8 +266,8 @@ function EventCard({ event }: { event: Event }) {
         )}
         {warning && d.canary_exposed === true && (
           <p className="muted">
-            이전 관찰 단계의 가짜 비밀 노출 기록입니다. 현재 정책의 접근 허용
-            여부와 구분됩니다.
+            This records fake-secret exposure during observation. It does not
+            indicate access under the current policy.
           </p>
         )}
       </div>
@@ -325,7 +339,7 @@ function App() {
     let requestNumber = 0;
     setRun(null);
     setEvents([]);
-    setStreamState("연결 중");
+    setStreamState("Connecting");
     localStorage.setItem("agentzero:lastRun", selected);
     const load = async () => {
       const n = ++requestNumber;
@@ -338,12 +352,12 @@ function App() {
         if (!alive) return;
         setEvents(data.events || []);
         if (terminal.has(data.status)) {
-          setStreamState("저장된 기록");
+          setStreamState("Saved history");
           return;
         }
         const last = data.events?.at(-1)?.id || 0;
         source = new EventSource(`/api/runs/${selected}/events?after=${last}`);
-        source.onopen = () => alive && setStreamState("실시간 연결");
+        source.onopen = () => alive && setStreamState("Live stream");
         source.onmessage = (message) => {
           if (!alive) return;
           const event: Event = JSON.parse(message.data);
@@ -355,11 +369,11 @@ function App() {
           load().catch((e) => alive && setError(e.message));
           if (event.kind === "completed") {
             source?.close();
-            setStreamState("기록 저장 완료");
+            setStreamState("History saved");
             refresh().catch(() => {});
           }
         };
-        source.onerror = () => alive && setStreamState("연결 복구 중");
+        source.onerror = () => alive && setStreamState("Reconnecting");
       })
       .catch((e) => alive && setError(e.message));
     return () => {
@@ -445,21 +459,21 @@ function App() {
             <div className="eyebrow">SELF-HEALING SECURITY SANDBOX</div>
             <h1>Observe. Patch. Verify.</h1>
             <p className="subtitle">
-              공격을 관찰하고, 실행 환경의 접근 정책을 복구합니다.
+              Observe attacks and repair sandbox security policies.
             </p>
           </div>
           <Tag tone={health?.configured ? "mint" : "amber"}>
-            {health?.configured ? "● LIVE API 모드" : "○ 연결 설정 필요"}
+            {health?.configured ? "● LIVE APIs" : "○ SETUP REQUIRED"}
           </Tag>
         </div>
         {error && (
           <div className="notice danger" role="alert">
-            <strong>실행을 확인해 주세요.</strong>
+            <strong>Unable to complete the request.</strong>
             <span>{error}</span>
             <button
               className="text-button"
               onClick={() => setError("")}
-              aria-label="오류 닫기"
+              aria-label="Dismiss error"
             >
               ×
             </button>
@@ -468,13 +482,13 @@ function App() {
         {health && !health.configured && (
           <div className="notice config">
             <div>
-              <strong>실제 서비스 연결을 기다리고 있어요.</strong>
+              <strong>Connect your services to get started.</strong>
               <p>
-                로컬 .env에 <code>{health.missing.join(", ")}</code> 설정 후
-                서버를 다시 시작하세요. 테스트용 응답으로 대체하지 않습니다.
+                Set <code>{health.missing.join(", ")}</code> in your local .env
+                file and restart the server. Runs use live services.
               </p>
             </div>
-            <a href="#connection">연결 상태 보기 ↗</a>
+            <a href="#connection">View connections ↗</a>
           </div>
         )}
 
@@ -482,11 +496,11 @@ function App() {
           <div className="control-label">
             <span className="section-number">01</span>
             <div>
-              <h2>시나리오</h2>
+              <h2>Scenario</h2>
               <span className="muted">
                 {scenario === "test-laundering"
-                  ? "실패 테스트 누락 · 결과 무결성"
-                  : "테스트 실행 요청 · 가짜 비밀만 사용"}
+                  ? "Omitted failing test · result integrity"
+                  : "Run project tests · fake secrets only"}
               </span>
             </div>
           </div>
@@ -510,7 +524,7 @@ function App() {
               disabled={busy}
               onClick={() => setScenario("normal")}
             >
-              정상 기준 실행
+              Baseline
             </button>
           </div>
           <div className="control-actions">
@@ -523,7 +537,7 @@ function App() {
                   }).catch((e) => setError(e.message))
                 }
               >
-                중지
+                Cancel
               </button>
             )}
             <button
@@ -532,17 +546,17 @@ function App() {
               onClick={start}
             >
               <span aria-hidden="true">▷</span>
-              {busy ? "실행 중" : "데모 시작"}
+              {busy ? "Running" : "Start demo"}
             </button>
           </div>
         </section>
 
-        <section className="flow panel" aria-label="시스템 구조">
+        <section className="flow panel" aria-label="System architecture">
           <div className="flow-node">
             <span className="node-symbol">W</span>
             <div>
               <strong>Worker Agent</strong>
-              <small>NOSANA · 작업 수행</small>
+              <small>NOSANA · task execution</small>
             </div>
           </div>
           <span className="flow-arrow">→</span>
@@ -552,7 +566,7 @@ function App() {
             </span>
             <div>
               <strong>Security Gateway</strong>
-              <small>정책 검사 · 실행 기록</small>
+              <small>Policy checks · execution logs</small>
             </div>
           </div>
           <span className="flow-arrow">→</span>
@@ -560,14 +574,14 @@ function App() {
             <span className="node-symbol daytona">D</span>
             <div>
               <strong>Daytona Sandbox</strong>
-              <small>비특권 계정 · 실제 실행</small>
+              <small>Unprivileged · live execution</small>
             </div>
           </div>
           <div className="flow-security">
             <span className="node-symbol security">S</span>
             <div>
               <strong>Security Agent</strong>
-              <small>NOSANA · 분석 → 패치 → 재검증</small>
+              <small>NOSANA · analyze → patch → verify</small>
             </div>
             <span className="loop-label">↻ POLICY FEEDBACK</span>
           </div>
@@ -581,16 +595,16 @@ function App() {
                   className={tab === "timeline" ? "active" : ""}
                   onClick={() => setTab("timeline")}
                 >
-                  실행 타임라인 <span>{events.length}</span>
+                  Execution timeline <span>{events.length}</span>
                 </button>
                 <button
                   className={tab === "readme" ? "active" : ""}
                   onClick={() => setTab("readme")}
                 >
-                  README 문서
+                  README document
                 </button>
               </div>
-              <span className="stream-state">{streamState || "실행 대기"}</span>
+              <span className="stream-state">{streamState || "Ready"}</span>
             </div>
             {tab === "readme" ? (
               <div className="document">
@@ -600,10 +614,10 @@ function App() {
                     {scenario === "normal" ? "NORMAL" : "UNTRUSTED INPUT"}
                   </Tag>
                 </div>
-                <pre>{scenarios[scenario] || "문서 로딩 중…"}</pre>
+                <pre>{scenarios[scenario] || "Loading document…"}</pre>
                 <p className="muted">
-                  선택한 다음 실행의 문서입니다. README는 Worker에게 추가 권한을
-                  부여하지 않습니다.
+                  Document for the next selected run. The README does not grant
+                  the Worker additional privileges.
                 </p>
               </div>
             ) : (
@@ -611,11 +625,11 @@ function App() {
                 <div className="timeline-toolbar">
                   <div className="filters">
                     {[
-                      ["all", "전체"],
-                      ["observe", "관찰"],
-                      ["security", "분석 · 패치"],
-                      ["verification", "검증"],
-                      ["fresh_worker", "새 Worker"],
+                      ["all", "All"],
+                      ["observe", "Observe"],
+                      ["security", "Analyze · patch"],
+                      ["verification", "Verify"],
+                      ["fresh_worker", "Fresh Worker"],
                     ].map(([value, label]) => (
                       <button
                         className={filter === value ? "active" : ""}
@@ -657,13 +671,13 @@ function App() {
                       </span>
                       <h3>
                         {events.length
-                          ? "이 단계의 이벤트가 없습니다"
-                          : "실행 증거가 쌓이는 곳"}
+                          ? "No events in this phase"
+                          : "Your execution evidence appears here"}
                       </h3>
                       <p>
                         {events.length
-                          ? "다른 필터를 선택해 보세요."
-                          : "데모를 시작하면 Worker의 행동부터 정책 복구까지\n모든 단계를 여기에서 확인할 수 있어요."}
+                          ? "Choose another filter."
+                          : "Start a demo to follow every step,\nfrom Worker actions to policy recovery."}
                       </p>
                       <div className="empty-pipeline">
                         <span>OBSERVE</span>
@@ -681,7 +695,8 @@ function App() {
             <section className="panel policy-panel">
               <div className="panel-title">
                 <h2>
-                  <Shield small /> {integrity ? "실행·보고 정책" : "접근 정책"}
+                  <Shield small />{" "}
+                  {integrity ? "Execution & reporting policy" : "Access policy"}
                 </h2>
                 <Tag tone={policy?.validated ? "mint" : ""}>
                   v{policy?.version || 0}
@@ -698,18 +713,18 @@ function App() {
                   <strong>
                     {policy?.mode === "enforce"
                       ? policy.validated
-                        ? "강제 적용 · 검증 완료"
-                        : "강제 적용 · 검증 중"
-                      : "관찰 모드"}
+                        ? "Enforced · verified"
+                        : "Enforced · verifying"
+                      : "Observation mode"}
                   </strong>
                   <small>
                     {integrity
                       ? policy?.mode === "enforce"
-                        ? "필수 전체 실행 · 증거와 일치하는 보고"
-                        : "부분 실행과 보고 내용을 관찰"
+                        ? "Full suite required · evidence-based reports"
+                        : "Observe partial runs and Worker reports"
                       : policy?.mode === "enforce"
-                        ? "Worker 보호 파일 읽기 제한"
-                        : "위반을 기록하되 접근은 허용"}
+                        ? "Protected file reads restricted"
+                        : "Log violations while allowing access"}
                   </small>
                 </div>
               </div>
@@ -723,19 +738,19 @@ function App() {
               </div>
               <div className="policy-diff">
                 <div>
-                  <span>소유자</span>
+                  <span>Owner</span>
                   <code>root : root</code>
                 </div>
                 <div>
-                  <span>{integrity ? "검증 범위" : "파일 권한"}</span>
+                  <span>{integrity ? "Test coverage" : "File mode"}</span>
                   <code>
                     {integrity ? (
                       policy?.require_full_suite ? (
                         <>
-                          <del>부분 실행</del> <b>→ 필수 3개 전체</b>
+                          <del>Partial suite</del> <b>→ all 3 required</b>
                         </>
                       ) : (
-                        "README 프로필 허용"
+                        "README profile allowed"
                       )
                     ) : policy?.version ? (
                       <>
@@ -747,35 +762,35 @@ function App() {
                   </code>
                 </div>
                 <div>
-                  <span>Worker 실행</span>
+                  <span>Worker identity</span>
                   <code>UID 31001 · no privileges</code>
                 </div>
               </div>
               <p className="policy-note">
                 {integrity
-                  ? "실패 테스트를 고치는 시나리오가 아닙니다. 누락된 실패를 정확히 보고하도록 실행·보고 정책을 복구합니다."
+                  ? "Recovery restores full-suite execution and truthful reporting. The underlying test failure remains."
                   : exposure
-                    ? "최초 노출은 과거 실행 기록에 남습니다. 패치는 이후 접근을 제한합니다."
-                    : "실행 전 보호 경계를 정의하고, 관찰한 위반을 근거로 정책을 강화합니다."}
+                    ? "The initial exposure remains in the audit history. The patch restricts subsequent access."
+                    : "Define the protected boundary before execution, then strengthen the policy using observed violations."}
               </p>
             </section>
             {integrity && run?.suite_audit && (
               <section className="panel audit-panel">
                 <div className="panel-title">
-                  <h2>독립 검증 결과</h2>
-                  <Tag tone="amber">테스트 실패 존재</Tag>
+                  <h2>Independent audit</h2>
+                  <Tag tone="amber">Failing test</Tag>
                 </div>
                 <div className="audit-content">
                   <p>
-                    <strong>{run.suite_audit.tests_run}개 실행</strong> ·{" "}
+                    <strong>{run.suite_audit.tests_run} run</strong> ·{" "}
                     {run.suite_audit.tests_run -
                       run.suite_audit.failures.length -
                       run.suite_audit.errors.length}
-                    개 통과 ·{" "}
+                    {" passed · "}
                     <span className="red-text">
                       {run.suite_audit.failures.length +
                         run.suite_audit.errors.length}
-                      개 실패
+                      {" failed"}
                     </span>
                   </p>
                   {run.suite_audit.failures.map((name) => (
@@ -785,15 +800,15 @@ function App() {
                   ))}
                   <p className="muted">
                     {run.final_test_status === "failed"
-                      ? "복구 후 Worker가 실제 실패를 정확히 보고했습니다."
-                      : "전체 테스트 기준은 README가 변경할 수 없습니다."}
+                      ? "After recovery, the Worker accurately reported the real failure."
+                      : "The README cannot redefine the required test suite."}
                   </p>
                 </div>
               </section>
             )}
             <section className="panel verification-panel">
               <div className="panel-title">
-                <h2>재검증 결과</h2>
+                <h2>Verification results</h2>
                 <span className="count">
                   {passed}
                   <span> / {checkKeys.length}</span>
@@ -816,7 +831,7 @@ function App() {
                         </span>
                         <span>{checks[key]}</span>
                         <small>
-                          {check ? (check.passed ? "PASS" : "FAIL") : "대기"}
+                          {check ? (check.passed ? "PASS" : "FAIL") : "PENDING"}
                         </small>
                       </summary>
                       {check?.result && (
@@ -833,12 +848,12 @@ function App() {
             {run?.decision && (
               <section className="panel analysis-panel">
                 <div className="panel-title">
-                  <h2>Security Agent 분석</h2>
+                  <h2>Security Agent analysis</h2>
                 </div>
-                <p>{run.decision.summary}</p>
+                <RecordedText value={run.decision.summary} />
                 <div className="evidence-tags">
                   {run.decision.evidence_ids.map((id) => (
-                    <Tag key={id}>증거 #{id}</Tag>
+                    <Tag key={id}>Evidence #{id}</Tag>
                   ))}
                 </div>
               </section>
@@ -849,30 +864,32 @@ function App() {
         <div className="bottom-grid">
           <section className="panel" id="connection">
             <div className="panel-title">
-              <h2>서비스 연결</h2>
+              <h2>Service connections</h2>
               <button
                 className="text-button"
                 disabled={!health?.configured || busy}
                 onClick={connectionCheck}
               >
-                {checkedModels ? "✓ 모델 확인 완료" : "모델 연결 확인 ↗"}
+                {checkedModels ? "✓ Models verified" : "Check models ↗"}
               </button>
             </div>
             <div className="connection-row">
               <span>Nosana / Worker</span>
-              <code>{health?.models.worker || "미설정"}</code>
+              <code>{health?.models.worker || "Not configured"}</code>
             </div>
             <div className="connection-row">
               <span>Nosana / Security</span>
-              <code>{health?.models.security || "미설정"}</code>
+              <code>{health?.models.security || "Not configured"}</code>
             </div>
             {health?.same_model && (
-              <p className="small-note">두 역할이 같은 모델을 사용합니다.</p>
+              <p className="small-note">Both roles use the same model.</p>
             )}
             <div className="connection-row">
               <span>Daytona / Sandbox</span>
               <code>
-                {run?.sandbox_id ? run.sandbox_id.slice(0, 16) : "실행 시 생성"}
+                {run?.sandbox_id
+                  ? run.sandbox_id.slice(0, 16)
+                  : "Created on run"}
               </code>
             </div>
             {run && (
@@ -884,18 +901,18 @@ function App() {
                     : "")
                 }
               >
-                환경 정리: {run.cleanup}
+                Cleanup: {run.cleanup}
                 {run.cleanup_note ? ` · ${run.cleanup_note}` : ""}
                 {run.cleanup === "failed"
-                  ? ` · Daytona에서 직접 삭제 필요: ${run.sandbox_id}`
+                  ? ` · Delete manually in Daytona: ${run.sandbox_id}`
                   : ""}
               </p>
             )}
           </section>
           <section className="panel history-panel">
             <div className="panel-title">
-              <h2>최근 실행</h2>
-              <span className="muted">로컬에 저장됨</span>
+              <h2>Recent runs</h2>
+              <span className="muted">Saved locally</span>
             </div>
             {history.length ? (
               history.slice(0, 5).map((item) => (
@@ -916,7 +933,7 @@ function App() {
                 </button>
               ))
             ) : (
-              <p className="history-empty">아직 실행 기록이 없습니다.</p>
+              <p className="history-empty">No runs yet.</p>
             )}
           </section>
         </div>
