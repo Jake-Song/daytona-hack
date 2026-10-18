@@ -1,16 +1,41 @@
 """Generate the editable one-slide deck and its matching print layout.
 
 Requires python-pptx (presentation tooling only, not an application dependency).
-Run: .venv/bin/python scripts/create_pitch.py
+Run: .venv/bin/python scripts/create_pitch.py [--lang en]
 """
 from html import escape
 from pathlib import Path
+import argparse
 
 from pptx import Presentation
 from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_SHAPE, MSO_CONNECTOR
 from pptx.util import Inches, Pt
 
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--lang", choices=["ko", "en"], default="ko")
+LANG = parser.parse_args().lang
+ENGLISH = LANG == "en"
+STEM = "AgentZero-Pitch-EN" if ENGLISH else "AgentZero-Pitch"
+FONT = "Arial" if ENGLISH else "UnDotum"
+TRANSLATIONS = {
+    "AI가 속아도, 실행 환경은 복구되어야 합니다.": "When agents get misled, the sandbox adapts.",
+    "공격을 관찰하고 → 정책을 자동 패치하고 → 실제 실행으로 방어를 검증합니다.": "Observe attacks → patch execution policies → verify defenses with real code.",
+    "참고 문서가\n실행 지시로 바뀔 때.": "Untrusted docs.\nUnintended actions.",
+    "악성 README는 Agent의 행동과\n검증 범위를 왜곡할 수 있습니다.\n격리만으로 작업의 정확성은 보장되지 않습니다.": "A malicious README can distort agent behavior\nand hide failing tests. Isolation alone\ndoes not guarantee task integrity.",
+    "NOSANA · 작업 추론": "NOSANA · task reasoning",
+    "도구 요청 · 정책 적용": "Tool requests · enforcement",
+    "격리된 실제 코드 실행": "Isolated code execution",
+    "↑ 정책 패치": "↑ Policy patch",
+    "실행 증거 분석 → 패치 제안\n제어 영역에서 검증·적용": "Analyze evidence → propose patch\nValidate & apply in control plane",
+    "2개만 실행 → ‘전체 성공’ 보고": "Run 2 tests → report “all passed”",
+    "3개 전체 실행 → 실패 1개 보고": "Run all 3 → expose 1 failure",
+    "복구의 목표: 실패를 숨기는 대신, 실제 테스트 결과를 정확히 드러내기.": "Expose real failures instead of hiding them behind a green test report.",
+    "백엔드 테스트": "backend tests",
+    "브라우저 테스트": "browser tests",
+    "실제 Daytona에서 정책 차단·전체 검증 확인": "Real Daytona: subset / forged-output blocking verified",
+    "Worker와 분리된 제어 영역  ·  관리 키 비노출  ·  실행 증거 기반 복구": "Separate control plane · No admin keys for Worker · Evidence-based recovery",
+}
 OUT = Path(__file__).resolve().parent.parent / "docs"
 OUT.mkdir(exist_ok=True)
 BG, PANEL, BORDER = "0B1015", "111C24", "293A46"
@@ -47,6 +72,10 @@ def line(x1, y1, x2, y2, color=BORDER, width=1):
 
 
 def text(x, y, w, h, value, size=22, color=WHITE, bold=False, link=None):
+    if ENGLISH:
+        if value in ("2개만 실행 → ‘전체 성공’ 보고", "3개 전체 실행 → 실패 1개 보고"):
+            size = 22
+        value = TRANSLATIONS.get(value, value)
     shape = slide.shapes.add_textbox(unit(x), unit(y), unit(w), unit(h))
     frame = shape.text_frame
     frame.clear()
@@ -58,7 +87,7 @@ def text(x, y, w, h, value, size=22, color=WHITE, bold=False, link=None):
         paragraph.line_spacing = 1.17
         run = paragraph.add_run()
         run.text = item
-        run.font.name = "UnDotum"
+        run.font.name = FONT
         run.font.size = Pt(size * 0.6)
         run.font.bold = bold
         run.font.color.rgb = RGBColor.from_string(color)
@@ -134,15 +163,28 @@ slide.notes_slide.notes_text_frame.text = (
     "슬라이드의 흐름은 구현된 복구 기능을 설명하며, 자동 테스트와 실제 정책 검증의 범위를 구분합니다. "
     "기존 비밀 파일 보호 시나리오도 구현되어 있습니다."
 )
+if ENGLISH:
+    slide.notes_slide.notes_text_frame.text = (
+        "30-second pitch: AgentZero observes AI-agent behavior and repairs execution policies. "
+        "Nosana provides inference for separate Worker and Security agents. Daytona executes real code in an isolated environment. "
+        "The featured attack uses a README to exclude a failing test and redefine a partial smoke run as overall success. "
+        "The Security Agent analyzes independent evidence and proposes a full-suite policy. The control plane validates, applies, and verifies it.\n\n"
+        "Evidence: 39 backend and 4 browser tests passed. Real Daytona checks reproduced a false-green smoke run, "
+        "then verified subset and forged-output blocking and execution of all 3 tests with 1 genuine failure. "
+        "In the live Qwen run, the Worker did not make a false-success claim, so the result was attack_not_reproduced. "
+        "Do not claim a completed live model-compromise-to-recovery demonstration. The slide describes implemented behavior; "
+        "automated workflow tests and real sandbox policy checks are distinct from live attack reproduction. "
+        "A separate protected-file access scenario is also implemented."
+    )
 prs.core_properties.title = "AgentZero — Self-Healing Security Sandbox"
 prs.core_properties.subject = "One-page hackathon pitch"
 prs.core_properties.author = "AgentZero"
-prs.save(OUT / "AgentZero-Pitch.pptx")
+prs.save(OUT / (STEM + ".pptx"))
 assert len(prs.slides) == 1
 for shape in slide.shapes:
     assert shape.left >= 0 and shape.top >= 0
     assert shape.left + shape.width <= prs.slide_width + 10
     assert shape.top + shape.height <= prs.slide_height + 10
-page = '<!doctype html><html lang="ko"><meta charset="UTF-8"><title>AgentZero — One-page Pitch</title><style>*{box-sizing:border-box}body{margin:0;background:#' + BG + ';font-family:UnDotum,"Noto Sans KR",Arial,sans-serif}.slide{position:relative;width:1600px;height:900px;overflow:hidden} @page{size:1600px 900px;margin:0}</style><body><main class="slide">' + ''.join(html) + '</main></body></html>'
-(OUT / "AgentZero-Pitch.html").write_text(page)
-print("Created one editable slide and matching print layout in docs/.")
+page = '<!doctype html><html lang="' + LANG + '"><meta charset="UTF-8"><title>AgentZero — One-page Pitch</title><style>*{box-sizing:border-box}body{margin:0;background:#' + BG + ';font-family:' + FONT + ',"Noto Sans KR",Arial,sans-serif}.slide{position:relative;width:1600px;height:900px;overflow:hidden} @page{size:1600px 900px;margin:0}</style><body><main class="slide">' + ''.join(html) + '</main></body></html>'
+(OUT / (STEM + ".html")).write_text(page)
+print("Created one editable slide and matching print layout:", STEM)

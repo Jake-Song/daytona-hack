@@ -2,6 +2,8 @@
 
 [1장 피치덱 PDF](docs/AgentZero-Pitch.pdf) · [편집용 PowerPoint](docs/AgentZero-Pitch.pptx) · [미리보기](docs/AgentZero-Pitch.png)
 
+[English pitch PDF](docs/AgentZero-Pitch-EN.pdf) · [Editable PowerPoint](docs/AgentZero-Pitch-EN.pptx) · [Preview](docs/AgentZero-Pitch-EN.png)
+
 README의 프롬프트 인젝션에 유도된 Worker의 행동을 관찰하고, 별도 Security Agent가 제안한 접근 정책을 실제 Daytona 샌드박스에 적용·재검증하는 해커톤 MVP입니다.
 
 ## 실행
